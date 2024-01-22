@@ -1,0 +1,499 @@
+"use client";
+import { PropertyTypeEnum } from "@/lib/consts";
+import { Input, Select, SelectItem } from "@nextui-org/react";
+import { Star } from "lucide-react";
+import Image from "next/image";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { FC, useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { Property, Room } from "../search/types";
+
+type Props = {};
+
+const ListOfStates = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jammu and Kashmir (union territory)",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+];
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+const Page: FC<Props> = (props) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const [firstName, setFirstName] = useState<string>();
+  const [lastName, setLastName] = useState<string>();
+  const [email, setEmail] = useState<string>();
+  const [phoneNumber, setPhoneNumber] = useState<string>();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [propertyId, setPropertyId] = useState<string>();
+  const [roomId, setRoomId] = useState<string>();
+  const [numberOfGuests, setNumberOfGuests] = useState<number | string>(0);
+  const [checkInDate, setCheckInDate] = useState<string | Date>();
+  const [checkOutDate, setCheckOutDate] = useState<string | Date>();
+  const [selectedState, setSelectedState] = useState<string>();
+  const [amount, setAmount] = useState<number>(0);
+  const [property, setProperty] = useState<Property>();
+  const [room, setRoom] = useState<Room>();
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams?.toString());
+    if (params.has("property-id")) {
+      setPropertyId(params.get("property-id")?.toString());
+    } else {
+      router.push("/search");
+    }
+    if (params.has("room-id")) {
+      setRoomId(params.get("room-id")?.toString());
+    } else {
+      router.push("/rooms?property-id=" + searchParams.get("property-id"));
+    }
+    if (params.has("check-in")) {
+      setCheckInDate(params.get("check-in")?.toString());
+    }
+    if (params.has("check-out")) {
+      setCheckOutDate(params.get("check-out")?.toString());
+    }
+    if (params.has("no-of-guests")) {
+      setNumberOfGuests(Number(params.get("no-of-guests")?.toString()));
+    }
+    if (params.has("state")) {
+      setSelectedState(params.get("state")?.toString());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  useEffect(() => {
+    const fetchRoom = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `/api/bookings?property-id=${propertyId}&room-id=${roomId}`,
+        );
+        const data = await res.json();
+        setProperty(data.property);
+        setRoom(data.room);
+        if (data.room.pricePerMonth && numberOfGuests != 0) {
+          setAmount(
+            data.room.pricePerMonth * parseInt(numberOfGuests.toString()),
+          );
+        }
+        console.log(data);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (propertyId && roomId) {
+      fetchRoom();
+    }
+  }, [roomId, propertyId]);
+
+  const createQueryString = useCallback(
+    (paramsToUpdate: Record<string, string>, paramToRemove?: string) => {
+      const params = new URLSearchParams(searchParams?.toString());
+      Object.entries(paramsToUpdate).forEach(([name, value]) => {
+        params.set(name, value);
+      });
+      if (paramToRemove) {
+        params.delete(paramToRemove);
+      }
+      return params.toString();
+    },
+    [searchParams],
+  );
+  const handlePay = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (!checkInDate || !checkOutDate) {
+      toast("Please select check-in and check-out dates.");
+      return;
+    }
+    if (!phoneNumber || !email || !firstName) {
+      toast("Please fill the guest details");
+      return;
+    }
+    const res = await fetch("/api/bookings/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        roomType: room?.roomType,
+        roomCategory: room?.roomCategory,
+        from: new Date(checkInDate),
+        to: new Date(checkOutDate),
+        numberOfGuests: numberOfGuests,
+        guestName: firstName + " " + lastName,
+        guestEmail: email,
+        guestPhoneNumber: phoneNumber,
+        propertyId: propertyId,
+        roomId: roomId,
+        amount,
+        userId: "6573382dc4015b9e34414abe",
+      }),
+    });
+    const data = await res.json();
+    const razorpay = new window.Razorpay({
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID as string,
+      order_id: data.orderId,
+      amount: data.amount,
+      handler: (res: any) => {
+        console.log(res, "res");
+      },
+      prefill: {
+        name: data.guestName,
+        email: data.guestEmail,
+        contact: data.guestPhoneNumber,
+      },
+      notes: {
+        guestName: data.notes.guestName,
+        guestPhoneNumber: data.notes.guestPhoneNumber,
+        guestEmail: data.notes.guestEmail,
+        from: data.notes.from.toString(),
+        to: data.notes.to.toString(),
+        numberOfGuests: data.notes.numberOfGuests,
+        roomType: data.notes.roomType,
+        roomCategory: data.notes.roomCategory,
+        propertyId: data.notes.propertyId,
+        userId: data.notes.userId,
+      },
+    });
+    razorpay.open();
+  };
+  if (loading || !property || !room) {
+    return (
+      <div className="relative min-h-screen w-full bg-white">
+        <div className="relative z-10 mx-auto grid max-w-screen-xl grid-cols-6 gap-5 p-5 pb-16">
+          <div className="col-span-4 h-96 w-full animate-pulse rounded-xl bg-blue-200"></div>
+          <div className="col-span-2 h-96 w-full animate-pulse rounded-xl bg-amber-200"></div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="relative min-h-screen w-full bg-blue-50">
+      <div className="relative z-10 mx-auto grid max-w-screen-xl grid-cols-6 gap-5 p-5 pb-16">
+        <div className="col-span-4 flex w-full flex-col gap-5 *:w-full">
+          <div className="rounded-xl bg-white">
+            <div className="border-b px-7 py-5">
+              <h3 className="font-rubik text-xl font-semibold">Hotel Info</h3>
+            </div>
+            <div className="px-7 py-5">
+              {property && (
+                <div className="flex justify-start gap-5">
+                  <Image
+                    src={property?.images[0].url}
+                    alt={property?.name}
+                    width={500}
+                    height={500}
+                    className="h-44 w-44 rounded-lg object-cover"
+                  />
+                  <div className="flex flex-col items-start justify-center gap-1.5">
+                    <div className="flex gap-1">
+                      {Array.from({ length: 5 }).map((_, index) => {
+                        return (
+                          <Star
+                            key={index}
+                            className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400"
+                          />
+                        );
+                      })}
+                    </div>
+                    <h3 className="font-rubik text-xl font-semibold">
+                      {property?.name}
+                    </h3>
+                    <p className="max-w-sm font-rubik text-sm font-light text-zinc-500">
+                      {property?.address}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="p-5 pt-0">
+              <div className="flex w-full items-center justify-start rounded-xl bg-blue-100 *:flex-1 *:flex-col *:items-start *:justify-center">
+                <div className="p-5">
+                  <span className="font-rubik text-xs font-medium">
+                    Check-In
+                  </span>
+                  <span className="text-md block font-rubik font-medium">
+                    {checkInDate &&
+                      new Date(checkInDate).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                  </span>
+                </div>
+                <div className="p-5">
+                  <span className="font-rubik text-xs font-medium">
+                    Check-Out
+                  </span>
+                  <span className="text-md block font-rubik font-medium">
+                    {checkOutDate &&
+                      new Date(checkOutDate).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                  </span>
+                </div>
+                {property?.type === PropertyTypeEnum[0] && (
+                  <div className="p-5">
+                    <span className="font-rubik text-xs font-medium">
+                      Number of Guests
+                    </span>
+                    <span className="text-md block font-rubik font-medium">
+                      {numberOfGuests && numberOfGuests} Guests
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="p-5 pt-0">
+              {room && (
+                <div className="rounded-xl bg-blue-100 p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-start gap-2">
+                      <h3 className="font-rubik text-lg font-semibold">Room</h3>
+                      <span className="font-rubik text-sm font-medium">
+                        ({room.roomType} {room.roomCategory} Room)
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
+                      {property?.type === PropertyTypeEnum[2] ? (
+                        <h3 className="font-rubik text-lg font-semibold">
+                          ₹{room?.pricePerDay + "/Day"}
+                        </h3>
+                      ) : (
+                        <h3 className="font-rubik text-lg font-semibold">
+                          ₹
+                          {room?.pricePerMonth *
+                            parseInt(numberOfGuests.toString()) +
+                            "/Month"}
+                        </h3>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="rounded-xl bg-white">
+            <div className="border-b px-7 py-5">
+              <h3 className="font-rubik text-xl font-semibold">
+                Guest Details
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 gap-5 px-7 py-5">
+              <Input
+                label="First Name"
+                placeholder="Enter First Name"
+                labelPlacement="outside"
+                variant="bordered"
+                classNames={{
+                  inputWrapper: "rounded-md",
+                  base: "font-rubik font-medium text-black text-sm",
+                }}
+                value={firstName}
+                onValueChange={setFirstName}
+              />
+              <Input
+                label="Last Name"
+                placeholder="Enter Last Name"
+                labelPlacement="outside"
+                variant="bordered"
+                classNames={{
+                  inputWrapper: "rounded-md",
+                  base: "font-rubik font-medium text-black text-sm",
+                }}
+                value={lastName}
+                onValueChange={setLastName}
+              />
+              <Input
+                type="email"
+                inputMode="email"
+                label="Email"
+                placeholder="Enter Email"
+                labelPlacement="outside"
+                variant="bordered"
+                classNames={{
+                  inputWrapper: "rounded-md",
+                  base: "font-rubik font-medium text-black text-sm",
+                }}
+                value={email}
+                onValueChange={setEmail}
+              />
+              <Input
+                type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                onWheel={(e) => e.currentTarget.blur()}
+                label="Phone Number"
+                placeholder="Enter Phone Number"
+                labelPlacement="outside"
+                variant="bordered"
+                classNames={{
+                  inputWrapper: "rounded-md",
+                  base: "font-rubik font-medium text-black text-sm",
+                }}
+                value={phoneNumber}
+                onValueChange={setPhoneNumber}
+              />
+            </div>
+          </div>
+          {/* <div className="rounded-xl bg-white">
+            <div className="border-b px-7 py-5">
+              <h3 className="font-rubik text-xl font-semibold">
+                Billing Details
+              </h3>
+            </div>
+            <div className="grid grid-cols-3 gap-5 px-7 py-5">
+              <Input
+                label="Billing Address"
+                placeholder="Enter Billing Address"
+                labelPlacement="outside"
+                variant="bordered"
+                classNames={{
+                  inputWrapper: "rounded-md",
+                  base: "font-rubik font-medium text-black text-sm",
+                }}
+              />
+              <Input
+                type="number"
+                inputMode="numeric"
+                label="Pincode"
+                placeholder="Enter Pincode"
+                labelPlacement="outside"
+                variant="bordered"
+                classNames={{
+                  inputWrapper: "rounded-md",
+                  base: "font-rubik font-medium text-black text-sm",
+                }}
+              />
+              <Select
+                label="State"
+                labelPlacement="outside"
+                variant="bordered"
+                placeholder="Select State"
+                classNames={{
+                  base: "font-rubik font-medium text-black text-sm",
+                  trigger: "rounded-md",
+                }}
+                selectedKeys={[selectedState || ""]}
+                onChange={(e) => {
+                  setSelectedState(e.target.value.toString());
+                }}
+              >
+                {ListOfStates.map((state) => (
+                  <SelectItem key={state} value={state}>
+                    {state}
+                  </SelectItem>
+                ))}
+              </Select>
+            </div>
+          </div> */}
+          <div>
+            <button
+              onClick={handlePay}
+              className="w-full rounded-xl bg-orange-500 px-5 py-5 font-rubik text-lg font-medium text-white"
+            >
+              Proceed to Pay
+            </button>
+            <span className="text-left font-rubik text-xs text-zinc-500">
+              By proceeding, I agree to Rofabs&apos;s Privacy Policy, User
+              Agreement & Terms of Service
+            </span>
+          </div>
+        </div>
+        <div className="col-span-2">
+          <div className="sticky top-24">
+            <div className="rounded-xl bg-white">
+              <div className="border-b px-7 py-5">
+                <h3 className="font-rubik text-xl font-semibold">
+                  Price Summary
+                </h3>
+              </div>
+              <div className="px-7 py-5">
+                <div className="flex items-center justify-between py-3">
+                  <span className="font-rubik text-sm">Room Charges</span>
+                  {room && property?.type === PropertyTypeEnum[2] ? (
+                    <h3 className="font-rubik text-sm">
+                      ₹{room?.pricePerDay + "/Day"}
+                    </h3>
+                  ) : (
+                    <h3 className="font-rubik text-sm">
+                      ₹
+                      {room?.pricePerMonth *
+                        parseInt(numberOfGuests.toString()) +
+                        "/Month"}
+                    </h3>
+                  )}
+                </div>
+                <div className="flex items-center justify-between border-y border-zinc-100 py-3">
+                  <h3 className="font-rubik text-sm">Taxes & Service Fees</h3>
+                  <h3 className="font-rubik text-sm">₹0</h3>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <h3 className="font-rubik font-semibold">
+                    Total Amount to be paid
+                  </h3>
+                  <div>
+                    {room && property?.type === PropertyTypeEnum[2] ? (
+                      <h3 className="font-rubik font-semibold">
+                        ₹{room?.pricePerDay + "/Day"}
+                      </h3>
+                    ) : (
+                      <h3 className="font-rubik font-semibold">
+                        ₹
+                        {room?.pricePerMonth *
+                          parseInt(numberOfGuests.toString()) +
+                          "/Month"}
+                      </h3>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="absolute inset-x-0 top-0 z-0 h-72 w-full bg-orange-500"></div>
+    </div>
+  );
+};
+
+export default Page;
