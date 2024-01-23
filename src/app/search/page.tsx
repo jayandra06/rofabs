@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { Play, Star } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 const Search: FC = () => {
   const router = useRouter();
   const pathname = usePathname();

@@ -1,55 +1,15 @@
 "use client";
 
 import { PropertyTypeEnum } from "@/lib/consts";
-import { Input, Select, SelectItem } from "@nextui-org/react";
+import { Input } from "@nextui-org/react";
 import { Star } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FC, useCallback, useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Property, Room } from "../search/types";
 
-type Props = {};
-
-const ListOfStates = [
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jammu and Kashmir (union territory)",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal",
-];
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
-const Page: FC<Props> = (props) => {
+const Page: FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -122,21 +82,22 @@ const Page: FC<Props> = (props) => {
     if (propertyId && roomId) {
       fetchRoom();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, propertyId]);
 
-  const createQueryString = useCallback(
-    (paramsToUpdate: Record<string, string>, paramToRemove?: string) => {
-      const params = new URLSearchParams(searchParams?.toString());
-      Object.entries(paramsToUpdate).forEach(([name, value]) => {
-        params.set(name, value);
-      });
-      if (paramToRemove) {
-        params.delete(paramToRemove);
-      }
-      return params.toString();
-    },
-    [searchParams],
-  );
+  const createQueryString = (
+    paramsToUpdate: Record<string, string>,
+    paramToRemove?: string,
+  ) => {
+    const params = new URLSearchParams(searchParams?.toString());
+    Object.entries(paramsToUpdate).forEach(([name, value]) => {
+      params.set(name, value);
+    });
+    if (paramToRemove) {
+      params.delete(paramToRemove);
+    }
+    return params.toString();
+  };
   const handlePay = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (!checkInDate || !checkOutDate) {

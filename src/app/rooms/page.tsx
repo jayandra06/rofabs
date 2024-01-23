@@ -41,6 +41,20 @@ const Page: FC = (props: Props) => {
   const [room, setRoom] = useState<Room[]>();
   const [groupedRooms, setGroupedRooms] = useState<any | undefined>();
 
+  const createQueryString = (
+    paramsToUpdate: Record<string, string>,
+    paramToRemove?: string,
+  ) => {
+    const params = new URLSearchParams(searchParams?.toString());
+    Object.entries(paramsToUpdate).forEach(([name, value]) => {
+      params.set(name, value);
+    });
+    if (paramToRemove) {
+      params.delete(paramToRemove);
+    }
+    return params.toString();
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(searchParams?.toString());
     if (params.has("property-id")) {
@@ -57,28 +71,20 @@ const Page: FC = (props: Props) => {
     if (params.has("no-of-guests")) {
       setNumberOfGuests(Number(params.get("no-of-guests")?.toString()));
     } else {
-      router.push(pathname + "?" + createQueryString({ "no-of-guests": "1" }));
+      router.push(
+        pathname +
+          "?" +
+          createQueryString({
+            "no-of-guests": "1",
+          }),
+      );
+      setNumberOfGuests(1);
     }
     if (params.has("area-or-landmark")) {
       setAreaOrLandmark(params.get("area-or-landmark")?.toString());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
-
-  // const createQueryString = useCallback(
-  //   (name: string, value: string) => {
-  //     const params = new URLSearchParams(searchParams?.toString());
-  //     params.set(name, value);
-  //     return params.toString();
-  //   },
-  //   [searchParams],
-  // );
-  const createQueryString = (paramsToUpdate: Record<string, string>) => {
-    const params = new URLSearchParams(searchParams?.toString());
-    Object.entries(paramsToUpdate).forEach(([name, value]) => {
-      params.set(name, value);
-    });
-    return params.toString();
-  };
 
   useEffect(() => {
     const fetchRoom = async () => {
@@ -94,14 +100,11 @@ const Page: FC = (props: Props) => {
           pathname +
             "?" +
             createQueryString({
-              city: data.location.city,
-              state: data.location.region,
-              country: data.location.country,
               "area-or-landmark": `${data.location.city}, ${data.location.region}, ${data.location.country_name}`,
             }),
         );
-        console.log(groupBy, "groupBy");
-        console.log(data);
+        // console.log(groupBy, "groupBy");
+        // console.log(data);
       } catch (error) {
         console.log(error);
       } finally {
@@ -112,6 +115,7 @@ const Page: FC = (props: Props) => {
     if (propertyId) {
       fetchRoom();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, propertyId]);
 
   useEffect(() => {
@@ -169,7 +173,9 @@ const Page: FC = (props: Props) => {
               router.push(
                 pathname +
                   "?" +
-                  createQueryString({ "check-in": e.target.value }),
+                  createQueryString({
+                    "check-in": e.target.value,
+                  }),
               );
             }}
           />
@@ -189,7 +195,9 @@ const Page: FC = (props: Props) => {
               router.push(
                 pathname +
                   "?" +
-                  createQueryString({ "check-out": e.target.value }),
+                  createQueryString({
+                    "check-out": e.target.value,
+                  }),
               );
             }}
           />
@@ -210,7 +218,9 @@ const Page: FC = (props: Props) => {
                 router.push(
                   pathname +
                     "?" +
-                    createQueryString({ "no-of-guests": e.target.value }),
+                    createQueryString({
+                      "no-of-guests": e.target.value,
+                    }),
                 );
               }}
             />
