@@ -1,19 +1,27 @@
 "use client";
 
 import { PropertyTypeEnum } from "@/lib/consts";
+import { cn } from "@/lib/utils";
 import { Input } from "@nextui-org/react";
-import { Star } from "lucide-react";
+import { Loader2, Star } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Property, Room } from "../search/types";
 
+declare global {
+  interface Window {
+    Razorpay: {} | any;
+  }
+}
+
 const Page: FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [creatingBooking, setCreatingBooking] = useState<boolean>(false);
   const [firstName, setFirstName] = useState<string>();
   const [lastName, setLastName] = useState<string>();
   const [email, setEmail] = useState<string>();
@@ -108,6 +116,8 @@ const Page: FC = () => {
       toast("Please fill the guest details");
       return;
     }
+    setCreatingBooking(true);
+    const t = toast.loading("Creating order");
     const res = await fetch("/api/bookings/create", {
       method: "POST",
       headers: {
@@ -128,7 +138,11 @@ const Page: FC = () => {
         userId: "6573382dc4015b9e34414abe",
       }),
     });
+    toast.dismiss(t);
+    toast.success("Order created");
+    toast.success("pay to confirm booking");
     const data = await res.json();
+    setCreatingBooking(false);
     const razorpay = new window.Razorpay({
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID as string,
       order_id: data.id,
@@ -393,9 +407,15 @@ const Page: FC = () => {
           <div>
             <button
               onClick={handlePay}
-              className="w-full rounded-xl bg-orange-500 px-5 py-5 font-rubik text-lg font-medium text-white"
+              className={cn(
+                "flex w-full items-center justify-center rounded-xl bg-orange-500 px-5 py-5 font-rubik text-lg font-medium text-white",
+                creatingBooking && "cursor-not-allowed opacity-50",
+              )}
             >
-              Proceed to Pay
+              {creatingBooking && (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              )}
+              Proceed to Pay ₹{amount}
             </button>
             <span className="text-left font-rubik text-xs text-zinc-500">
               By proceeding, I agree to Rofabs&apos;s Privacy Policy, User

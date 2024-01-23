@@ -1,4 +1,3 @@
-import { CachedConnection, DbConnection } from "@/types/global";
 import { Db, MongoClient, MongoClientOptions } from "mongodb";
 
 const MONGODB_URI = process.env.MONGODB_URI as string;
@@ -7,6 +6,20 @@ if (!MONGODB_URI) {
   throw new Error(
     "Please define the MONGODB_URI environment variable inside .env.local",
   );
+}
+
+interface CachedConnection {
+  conn: DbConnection | null;
+  promise: Promise<DbConnection> | null;
+}
+
+interface DbConnection {
+  client: MongoClient;
+  db: Db;
+}
+
+declare global {
+  var mongo: CachedConnection | undefined;
 }
 
 let cached = global.mongo as CachedConnection;
