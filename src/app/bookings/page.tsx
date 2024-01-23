@@ -1,4 +1,5 @@
 "use client";
+
 import { PropertyTypeEnum } from "@/lib/consts";
 import { Input, Select, SelectItem } from "@nextui-org/react";
 import { Star } from "lucide-react";
