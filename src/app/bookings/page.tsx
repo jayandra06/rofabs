@@ -169,10 +169,11 @@ const Page: FC<Props> = (props) => {
     const data = await res.json();
     const razorpay = new window.Razorpay({
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID as string,
-      order_id: data.orderId,
+      order_id: data.id,
       amount: data.amount,
       handler: (res: any) => {
         console.log(res, "res");
+        toast.success("Payment Successful");
       },
       prefill: {
         name: data.guestName,
@@ -190,6 +191,7 @@ const Page: FC<Props> = (props) => {
         roomCategory: data.notes.roomCategory,
         propertyId: data.notes.propertyId,
         userId: data.notes.userId,
+        orderId: data.orderId,
       },
     });
     razorpay.open();

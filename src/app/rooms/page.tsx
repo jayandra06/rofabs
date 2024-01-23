@@ -34,7 +34,7 @@ const Page: FC = (props: Props) => {
   const [propertyId, setPropertyId] = useState<string>();
   const [roomId, setRoomId] = useState<string>();
   const [areaOrLandmark, setAreaOrLandmark] = useState<string>();
-  const [numberOfGuests, setNumberOfGuests] = useState<number | string>(0);
+  const [numberOfGuests, setNumberOfGuests] = useState<number | string>(1);
   const [checkInDate, setCheckInDate] = useState<string>();
   const [checkOutDate, setCheckOutDate] = useState<string>();
   const [property, setProperty] = useState<Property>();
@@ -56,6 +56,8 @@ const Page: FC = (props: Props) => {
     }
     if (params.has("no-of-guests")) {
       setNumberOfGuests(Number(params.get("no-of-guests")?.toString()));
+    } else {
+      router.push(pathname + "?" + createQueryString({ "no-of-guests": "1" }));
     }
     if (params.has("area-or-landmark")) {
       setAreaOrLandmark(params.get("area-or-landmark")?.toString());

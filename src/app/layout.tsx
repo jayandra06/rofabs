@@ -28,6 +28,8 @@ export default function RootLayout({
               fontWeight: "600",
               backgroundColor: "#000",
               color: "#FFF",
+              maxWidth: "100%",
+              textAlign: "center",
             },
           }}
         />

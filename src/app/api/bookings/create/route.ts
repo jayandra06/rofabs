@@ -4,7 +4,7 @@ import Razorpay from "razorpay";
 
 export async function POST(request: Request) {
   const payload: OrderProps = await request.json();
-  console.log(payload, "payload");
+  // console.log(payload, "payload");
   const randomNum = Math.floor(Math.random() * 1000);
   const instance = new Razorpay({
     key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID as string,
@@ -27,6 +27,6 @@ export async function POST(request: Request) {
       userId: payload.userId,
     },
   });
-  console.log(order, "order");
+  // console.log(order, "order");
   return Response.json(order);
 }
