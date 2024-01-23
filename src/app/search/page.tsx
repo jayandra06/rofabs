@@ -31,19 +31,20 @@ const Search: FC = () => {
   const [roomCategory, setRoomCategory] = useState<string>();
   const [searchRooms, setSearchRooms] = useState<SearchResponse>();
 
-  const createQueryString = useCallback(
-    (paramsToUpdate: Record<string, string>, paramToRemove?: string) => {
-      const params = new URLSearchParams(searchParams?.toString());
-      Object.entries(paramsToUpdate).forEach(([name, value]) => {
-        params.set(name, value);
-      });
-      if (paramToRemove) {
-        params.delete(paramToRemove);
-      }
-      return params.toString();
-    },
-    [searchParams],
-  );
+  const createQueryString = (
+    paramsToUpdate: Record<string, string>,
+    paramToRemove?: string,
+  ) => {
+    const params = new URLSearchParams(searchParams?.toString());
+    Object.entries(paramsToUpdate).forEach(([name, value]) => {
+      params.set(name, value);
+    });
+    if (paramToRemove) {
+      params.delete(paramToRemove);
+    }
+    return params.toString();
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(searchParams?.toString());
     if (params.has("property-type")) {
