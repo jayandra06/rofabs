@@ -329,6 +329,7 @@ const Search: FC = () => {
                     pagination={{ clickable: true }}
                     // onSwiper={(swiper) => console.log(swiper)}
                     // onSlideChange={() => console.log("slide change")}
+                    //
                   >
                     {prop.images.map((image, k) => (
                       <SwiperSlide key={k + image.url}>

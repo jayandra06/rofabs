@@ -1,5 +1,4 @@
 "use client";
-
 import { PropertyTypeEnum } from "@/lib/consts";
 import { cn } from "@/lib/utils";
 import { Input } from "@nextui-org/react";
