@@ -3,6 +3,7 @@
 import { PropertyTypeEnum } from "@/lib/consts";
 import { cn } from "@/lib/utils";
 import { Input } from "@nextui-org/react";
+import { differenceInDays } from "date-fns";
 import { Loader2, Star } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -78,6 +79,11 @@ const Page: FC = () => {
           setAmount(
             data.room.pricePerMonth * parseInt(numberOfGuests.toString()),
           );
+        } else if (data.room.pricePerDay && checkInDate && checkOutDate) {
+          setAmount(
+            data.room.pricePerDay *
+              differenceInDays(new Date(checkOutDate), new Date(checkInDate)),
+          );
         }
         console.log(data);
       } catch (error) {
@@ -109,11 +115,23 @@ const Page: FC = () => {
   const handlePay = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (!checkInDate || !checkOutDate) {
-      toast("Please select check-in and check-out dates.");
+      toast.error("Please select check-in and check-out dates.");
       return;
     }
     if (!phoneNumber || !email || !firstName) {
       toast("Please fill the guest details");
+      return;
+    }
+    if (firstName.length < 3) {
+      toast.error("Please enter a valid first name");
+      return;
+    }
+    if (!email.match(/^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$/)) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    if (!phoneNumber.match(/^[0-9]{10}$/)) {
+      toast.error("Please enter a valid phone number");
       return;
     }
     setCreatingBooking(true);
@@ -129,7 +147,7 @@ const Page: FC = () => {
         from: new Date(checkInDate),
         to: new Date(checkOutDate),
         numberOfGuests: numberOfGuests,
-        guestName: firstName + " " + lastName,
+        guestName: firstName + " " + lastName || "",
         guestEmail: email,
         guestPhoneNumber: phoneNumber,
         propertyId: propertyId,
@@ -447,7 +465,21 @@ const Page: FC = () => {
                     </h3>
                   )}
                 </div>
-                <div className="flex items-center justify-between border-y border-zinc-100 py-3">
+                {property.type === PropertyTypeEnum[2] &&
+                  checkInDate &&
+                  checkOutDate && (
+                    <div className="flex items-center justify-between border-y border-zinc-100 py-3">
+                      <h3 className="font-rubik text-sm">No of Days</h3>
+                      <h3 className="font-rubik text-sm">
+                        {differenceInDays(
+                          new Date(checkOutDate),
+                          new Date(checkInDate),
+                        )}{" "}
+                        Days
+                      </h3>
+                    </div>
+                  )}
+                <div className="flex items-center justify-between border-b border-zinc-100 py-3">
                   <h3 className="font-rubik text-sm">Taxes & Service Fees</h3>
                   <h3 className="font-rubik text-sm">₹0</h3>
                 </div>
@@ -456,18 +488,7 @@ const Page: FC = () => {
                     Total Amount to be paid
                   </h3>
                   <div>
-                    {room && property?.type === PropertyTypeEnum[2] ? (
-                      <h3 className="font-rubik font-semibold">
-                        ₹{room?.pricePerDay + "/Day"}
-                      </h3>
-                    ) : (
-                      <h3 className="font-rubik font-semibold">
-                        ₹
-                        {room?.pricePerMonth *
-                          parseInt(numberOfGuests.toString()) +
-                          "/Month"}
-                      </h3>
-                    )}
+                    {<h3 className="font-rubik font-semibold">₹{amount}</h3>}
                   </div>
                 </div>
               </div>

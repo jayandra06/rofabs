@@ -31,6 +31,7 @@ const Search: FC = () => {
   const [propertyType, setPropertyType] = useState<string>();
   const [roomType, setRoomType] = useState<string>();
   const [roomCategory, setRoomCategory] = useState<string>();
+  const [location, setLocation] = useState<string>();
   const [searchRooms, setSearchRooms] = useState<SearchResponse>();
 
   const createQueryString = (
@@ -62,6 +63,9 @@ const Search: FC = () => {
         params.get("room-category")?.replace("-", "/").replace("+", " "),
       );
     }
+    if (params.has("location")) {
+      setLocation(params.get("location")?.replace("+", " "));
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -87,8 +91,8 @@ const Search: FC = () => {
 
   return (
     <div className="bg-blue-50">
-      <div className="mx-auto flex w-full max-w-screen-xl items-start justify-start">
-        <div className="my-5 flex h-full min-h-screen w-[250px] flex-col items-start justify-start rounded-lg bg-white *:w-full *:border-b *:border-indigo-50 *:p-5">
+      <div className="mx-auto flex w-full max-w-screen-xl items-start justify-start gap-5">
+        <div className="my-5 flex h-full min-h-screen w-[250px] flex-col items-start justify-start rounded-xl bg-white *:w-full *:border-b *:border-indigo-50 *:p-5">
           <div className="flex flex-col gap-2.5">
             <div
               onClick={() =>
@@ -277,7 +281,7 @@ const Search: FC = () => {
             )}
           </div>
         </div>
-        <div className="w-full flex-1 flex-col gap-2.5 p-5 *:w-full">
+        <div className="flex w-full flex-1 flex-col gap-5 py-5 *:w-full">
           {loading &&
             Array.from({ length: 3 }).map((_, index) => (
               <div key={index} className="p-5">
@@ -292,15 +296,28 @@ const Search: FC = () => {
                 </div>
               </div>
             ))}
-          {/* {!loading && searchRooms && searchRooms?.data. === 0 && (
-
-        )} */}
+          {!loading && searchRooms?.data.length === 0 && (
+            <div className="flex items-center justify-start gap-2 px-2.5 py-5 font-rubik text-lg font-semibold">
+              No results found for{" "}
+              <span className="text-base text-blue-600">
+                {location?.split(",")[0]} {location?.split(",")[1]}
+              </span>
+            </div>
+          )}
+          {!loading && searchRooms?.data && searchRooms.data.length > 0 && (
+            <div className="flex items-center justify-start gap-2 px-2.5 pb-2.5 pt-5 text-left font-rubik text-base font-semibold">
+              Showing search results for{" "}
+              <span className="text-base text-blue-600">{location}</span>
+            </div>
+          )}
           {searchRooms?.data.map((prop, i) => {
             return (
               <Link
-                href={"/rooms?" + "property-id=" + prop._id}
+                href={
+                  "rooms" + "?" + createQueryString({ "property-id": prop._id })
+                }
                 key={prop._id}
-                className="relative my-5 grid w-full cursor-pointer grid-cols-5 rounded-lg bg-white p-2"
+                className="relative grid w-full cursor-pointer grid-cols-5 rounded-xl bg-white p-3"
               >
                 <div className="relative col-span-2">
                   <Swiper

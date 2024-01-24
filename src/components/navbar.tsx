@@ -40,7 +40,12 @@ const links = [
 const Navbar: FC = (props: Props) => {
   const pathname = usePathname();
   return (
-    <div className="sticky top-0 z-[99] mx-auto max-w-screen-2xl bg-white ">
+    <div
+      className={cn(
+        "sticky top-0 z-[99] mx-auto max-w-screen-2xl bg-white",
+        pathname === "/" && "relative",
+      )}
+    >
       <div className="flex items-center justify-between border-b px-10 py-5 backdrop-blur-sm">
         <div className="font-sora font-semibold">Rofabs</div>
         <div className="flex items-center justify-center gap-2.5">

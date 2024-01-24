@@ -23,3 +23,13 @@ body {
 .mesh-bg {
   background: url("/public/Whangaehu.png") no-repeat center center fixed !important;
 }
+
+/* div[data-slot="input-wrapper"] {
+  border-radius: 0.5rem !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
+}
+label[data-slot="label"] {
+  border-radius: 0.875rem !important;
+  font-weight: 500 !important;
+} */

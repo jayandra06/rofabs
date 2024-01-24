@@ -1,5 +1,4 @@
 import { OrderProps } from "@/app/search/types";
-import { UUID } from "mongodb";
 import Razorpay from "razorpay";
 
 export async function POST(request: Request) {
